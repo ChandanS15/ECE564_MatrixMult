@@ -1,0 +1,536 @@
+m255
+K4
+z2
+Z0 !s99 nomlopt
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+!s11f vlog 2021.2 2021.04, Apr 14 2021
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z1 d/mnt/ncsudrive/c/csriniv4/Documents/ECE564/mini_project/run
+T_opt
+!s110 1729902282
+Vm^UmJoGTVORUgPj3G]b6h3
+04 6 4 work tb_top fast 0
+=1-000ae431a4f1-671c36c8-7e522-21749b
+!s124 OEM100
+o-quiet -auto_acc_if_foreign -work work +acc
+Z2 tCvgOpt 0
+n@_opt
+OE;O;2021.2;73
+vDW_fp_add
+Z3 !s110 1729887643
+!i10b 1
+!s100 n@:mWCkjS1DPSnXl3SFTm2
+IONNO=G[[Wa3aOJNSS9b^?0
+R1
+Z4 w1660782088
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_add.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_add.v
+!i122 3
+L0 64 71
+Z5 VDg1SIo80bB@j0V0VzS_@n1
+Z6 OE;L;2021.2;73
+r1
+!s85 0
+31
+!i113 0
+Z7 o-L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R2
+n@d@w_fp_add
+vDW_fp_add_DG
+Z8 !s110 1729887644
+!i10b 1
+!s100 Q1l<VIgCA]l`8XYW70BFY2
+IDn=TiVjm@ddEK>MhJzhfn2
+R1
+Z9 w1660782087
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_add_DG.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_add_DG.v
+!i122 3
+L0 68 73
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_add_@d@g
+vDW_fp_addsub
+R8
+!i10b 1
+!s100 MgHDFU@joGeQL]HzE;6j`1
+I6gbS^mF[m9O=9`XBNoH]12
+R1
+Z10 w1660782060
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_addsub.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_addsub.v
+!i122 3
+L0 86 451
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_addsub
+vDW_fp_addsub_DG
+R3
+!i10b 1
+!s100 l4`k7l[bUgWld]YbikkVE3
+IdKa4AFGf?3gH9@Bb01`I;0
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_addsub_DG.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_addsub_DG.v
+!i122 3
+L0 84 454
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_addsub_@d@g
+vDW_fp_cmp
+R3
+!i10b 1
+!s100 g]hzY;Z=i<n@F_Rk5nYgo3
+IADf;JR1<ei>;T8ga:XSWa0
+R1
+R10
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_cmp.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_cmp.v
+!i122 3
+L0 75 234
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_cmp
+vDW_fp_cmp_DG
+R3
+!i10b 1
+!s100 V]b8ec;]B@C@`91HQL]Ed1
+IG^2j5DWL`I2V5l6B]WK`b2
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_cmp_DG.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_cmp_DG.v
+!i122 3
+L0 80 243
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_cmp_@d@g
+vDW_fp_div
+R8
+!i10b 1
+!s100 lF^;@lQcRS`fLIi;MMjA=3
+I2lCY^_KVWCf8jmgC[g8YT0
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div.v
+!i122 3
+L0 97 618
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_div
+vDW_fp_div_DG
+Z11 !s110 1729887642
+!i10b 1
+!s100 ZO>mF>W_TP<:Bm[2[bU2z0
+I3lF79W=dOZFihZ`ij<ma[0
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div_DG.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div_DG.v
+!i122 3
+L0 75 84
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_div_@d@g
+vDW_fp_div_seq
+R3
+!i10b 1
+!s100 A65YmaHaQ>1F9C7]XD5lM1
+I[iAh2XDZ1Ce9i[_DCf4oH3
+R1
+w1660782204
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div_seq.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_div_seq.v
+!i122 3
+L0 114 649
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_div_seq
+vDW_fp_dp2
+R11
+!i10b 1
+!s100 Bnn5VN;`igLhf?0D[:XnT3
+Ig^QTT8Q]fOCQ:jJ^=8[`[2
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp2.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp2.v
+!i122 3
+L0 92 588
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_dp2
+vDW_fp_dp3
+R8
+!i10b 1
+!s100 3KUQDaXGMgb[i<^>[6UT`1
+IglWAfaKB`?;n8KZeMfOf?1
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp3.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp3.v
+!i122 3
+L0 89 795
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_dp3
+vDW_fp_dp4
+R11
+!i10b 1
+!s100 1j]1PlO;QG^iiUbzf7ho_1
+IgXj2PNK4lDKzfUA>gl8jQ0
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp4.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_dp4.v
+!i122 3
+L0 104 1043
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_dp4
+vDW_fp_exp
+R11
+!i10b 1
+!s100 7COI[GlJ`n^Q=fak32N9?2
+IU;:5LOLE:GUB188YT78X40
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_exp.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_exp.v
+!i122 3
+L0 72 382
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_exp
+vDW_fp_exp2
+R11
+!i10b 1
+!s100 BLM5b8^HY;KWR^c0E:OeS2
+IG>j32B07>MaUcA6L;QkSD2
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_exp2.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_exp2.v
+!i122 3
+L0 77 362
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_exp2
+vDW_fp_flt2i
+R8
+!i10b 1
+!s100 nMnTfS9bjfb_@c85jTGKg2
+Il5Ej17PUM]1YogTZGJhJL1
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_flt2i.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_flt2i.v
+!i122 3
+L0 67 381
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_flt2i
+vDW_fp_i2flt
+R3
+!i10b 1
+!s100 hY=5c[<X4:NEPPW1LRRE51
+Ik<39omef@[BB6TdLjBD4l1
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_i2flt.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_i2flt.v
+!i122 3
+L0 59 284
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_i2flt
+vDW_fp_ifp_conv
+R3
+!i10b 1
+!s100 <cDTSdI;]_VGe24GSmWPj1
+I=lh1hPfL@ogdzJK;_17?b2
+R1
+R4
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_ifp_conv.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_ifp_conv.v
+!i122 3
+L0 47 193
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_ifp_conv
+vDW_fp_invsqrt
+R3
+!i10b 1
+!s100 [zlPPl8RfUY8Kf=z:0Q[31
+ImbfD@DY9aS>CUKBDg3a[V2
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_invsqrt.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_invsqrt.v
+!i122 3
+L0 66 315
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_invsqrt
+vDW_fp_ln
+R11
+!i10b 1
+!s100 T2Sk9[^iKY=Ec:6odDG522
+Io;6GaE6]VVQ@aTFSR[Ne52
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_ln.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_ln.v
+!i122 3
+L0 88 304
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_ln
+vDW_fp_log2
+R8
+!i10b 1
+!s100 C5f9D?3hNEaea6[JJ>gDl2
+I4924LDAN69FT=jU^Ddz7_0
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_log2.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_log2.v
+!i122 3
+L0 81 311
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_log2
+vDW_fp_mac
+R3
+!i10b 1
+!s100 Yb:d=RRCY?AHL^aHDhSaW2
+IdG2lOdEJ9Y^E=:VQGBAZ]2
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mac.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mac.v
+!i122 3
+L0 69 82
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_mac
+vDW_fp_mac_DG
+R8
+!i10b 1
+!s100 BND=SS_XAf@0S]>h@]BWm1
+I@IUz@ZzjnEQ:JfFE>jInY2
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mac_DG.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mac_DG.v
+!i122 3
+L0 79 87
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_mac_@d@g
+vDW_fp_mac_inst
+Z12 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
+Z13 !s110 1729902203
+!i10b 1
+!s100 f]2fC=?Sl?zz1SPL@B7=^0
+IOE:09kLKAkVDBBOFC6NG90
+S1
+R1
+Z14 w1729902199
+Z15 8../rtl/dut.sv
+Z16 F../rtl/dut.sv
+!i122 37
+L0 447 23
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+Z17 o-sv -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R2
+n@d@w_fp_mac_inst
+vDW_fp_mult
+R8
+!i10b 1
+!s100 lH<mDMncAI9U:M=geEdO`0
+I43joeHN]n95W2d>O3Zk:>3
+R1
+R10
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mult.v
+F/mnt/apps/public/COE/synopsys_apps/syn/T-2022.03-SP4/dw/sim_ver/DW_fp_mult.v
+!i122 3
+L0 99 494
+R5
+R6
+r1
+!s85 0
+31
+!i113 0
+R7
+R2
+n@d@w_fp_mult
+vDW_fp_mult_DG
+R8
+!i10b 1
+!s100 ]JWWAe7gaH8m^a=4edkTA2
+IA51hmEUbFGdT=?6zGC9RP0
+R1
+R9
+8/mnt/apps/public/COE/synopsys_apps/syn/T-2022

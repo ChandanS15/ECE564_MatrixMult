@@ -1,0 +1,81 @@
+# //  ModelSim SE 2021.2 Apr 14 2021 Linux 4.18.0-553.22.1.el8_10.x86_64
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  ModelSim SE and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# vsim -voptargs="+acc" tb_top "+TIMEOUT=10000000" "+num_of_testcases=1" "+epsilon_mult=1.0" "+input_dir=../inputs" "+mystery_test=0" -do "log -r *; do wave.do" 
+# Start time: 20:28:54 on Oct 25,2024
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading sv_std.std
+# Loading work.tb_top(fast)
+# Loading work.sram(fast)
+# Loading work.sram(fast__1)
+# Loading work.MyDesign(fast)
+# Loading work.DW_fp_mac_inst(fast)
+# Loading work.DW_fp_mac(fast)
+# Loading work.DW_fp_dp2(fast)
+# log -r *
+#  do wave.do
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/accum_result'.
+# Executing ONERROR command at macro ./wave.do line 19
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/compute_phase'.
+# Executing ONERROR command at macro ./wave.do line 20
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/compute_complete_sys'.
+# Executing ONERROR command at macro ./wave.do line 22
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/result_write_complete'.
+# Executing ONERROR command at macro ./wave.do line 24
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/dut_ready_r'.
+# Executing ONERROR command at macro ./wave.do line 25
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/current_state_sys'.
+# Executing ONERROR command at macro ./wave.do line 26
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/next_state_sys'.
+# Executing ONERROR command at macro ./wave.do line 27
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/current_state_input'.
+# Executing ONERROR command at macro ./wave.do line 28
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/next_state_input'.
+# Executing ONERROR command at macro ./wave.do line 29
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/current_state_weight'.
+# Executing ONERROR command at macro ./wave.do line 30
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/next_state_weight'.
+# Executing ONERROR command at macro ./wave.do line 31
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/get_input_array_size'.
+# Executing ONERROR command at macro ./wave.do line 34
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/get_weight_array_size'.
+# Executing ONERROR command at macro ./wave.do line 35
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/read_addr_sel_input'.
+# Executing ONERROR command at macro ./wave.do line 36
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/read_addr_sel_weight'.
+# Executing ONERROR command at macro ./wave.do line 37
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/write_enable_sel_input'.
+# Executing ONERROR command at macro ./wave.do line 38
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/write_enable_sel_weight'.
+# Executing ONERROR command at macro ./wave.do line 39
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/input_array_num_of_rows'.
+# Executing ONERROR command at macro ./wave.do line 40
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/input_array_num_of_cols'.
+# Executing ONERROR command at macro ./wave.do line 41
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/weight_array_num_of_rows'.
+# Executing ONERROR command at macro ./wave.do line 42
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/weight_array_num_of_cols'.
+# Executing ONERROR command at macro ./wave.do line 43
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/num_of_weight_cols_traversed'.
+# Executing ONERROR command at macro ./wave.do line 44
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/num_of_weight_matrix_traversed'.
+# Executing ONERROR command at macro ./wave.do line 45
+# ** UI-Msg: (vish-4014) No objects found matching '/tb_top/dut/input_row_loopback_offset'.
+# Executing ONERROR command at macro ./wave.do line 46
+add wave -position insertpoint sim:/tb_top/dut/*
+run
+# INFO: number of testcases:           1
+# INFO: DONE WITH RESETING DUT
+# INFO:LVL0: ######## Running Test: 1 ########
+# INFO: Reading memory file: ../inputs/mini_proj_test_1_input.dat
+# INFO: Reading memory file: ../inputs/mini_proj_test_1_weight.dat
