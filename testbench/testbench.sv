@@ -18,6 +18,8 @@
 ************************************************/
 `include "common.vh"
 
+`define TEST1
+
 module tb_top();
 
 
@@ -243,12 +245,13 @@ module tb_top();
     $display("Received filename in check_result = %s", filename);
 
     epsilon = $bitstoshortreal(64'h3CB0_0000);
-
-    //$readmemh($sformatf("%s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum), mem);
-   //$display($sformatf("INFO: %s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum));
-
+`ifdef TEST1
+   $readmemh($sformatf("%s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum), mem);
+   $display($sformatf("INFO: %s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum));
+`else
    $readmemh($sformatf("%s/mini_proj_test_%0d_result.dat",input_dir, testNum), mem);
    $display($sformatf("INFO: %s/mini_proj_test_%0d_result.dat",input_dir,testNum));
+`endif
 
     foreach (mem[key]) begin
       num_of_result_elements ++;
@@ -280,11 +283,14 @@ module tb_top();
     
     $display("INFO:LVL0: ######## Running Test: %0d ########",testNum);
     wait_n_clks(10);
-    //sram_input_mem.loadMem($sformatf("%s/%s_%0d/%s_%0d_input.dat",input_dir, dirname,testNum, filename, testNum));
-    //sram_weight_mem.loadMem($sformatf("%s/%s_%0d/%s_%0d_weight.dat",input_dir, dirname, testNum, filename, testNum));
 
-    sram_input_mem.loadMem($sformatf("%s/mini_proj_test_%0d_input.dat",input_dir,testNum));
-    sram_weight_mem.loadMem($sformatf("%s/mini_proj_test_%0d_weight.dat",input_dir,testNum));
+    `ifdef TEST1
+        sram_input_mem.loadMem($sformatf("%s/%s_%0d/%s_%0d_input.dat",input_dir, dirname,testNum, filename, testNum));
+        sram_weight_mem.loadMem($sformatf("%s/%s_%0d/%s_%0d_weight.dat",input_dir, dirname, testNum, filename, testNum));
+    `else
+        sram_input_mem.loadMem($sformatf("%s/mini_proj_test_%0d_input.dat",input_dir,testNum));
+        sram_weight_mem.loadMem($sformatf("%s/mini_proj_test_%0d_weight.dat",input_dir,testNum));
+    `endif
 
 
     sram_result_mem.mem.delete();
