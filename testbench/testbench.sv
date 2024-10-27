@@ -245,10 +245,10 @@ module tb_top();
     epsilon = $bitstoshortreal(64'h3CB0_0000);
 
     //$readmemh($sformatf("%s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum), mem);
-    //$display($sformatf("INFO: %s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum));
+   //$display($sformatf("INFO: %s/%s_%0d/%s_%0d_result.dat",input_dir, dirname, testNum, filename, testNum));
 
-    $readmemh($sformatf("%s/mini_proj_test_%0d_result.dat",input_dir, testNum), mem);
-    $display($sformatf("INFO: %s/mini_proj_test_%0d_result.dat",input_dir,testNum));
+   $readmemh($sformatf("%s/mini_proj_test_%0d_result.dat",input_dir, testNum), mem);
+   $display($sformatf("INFO: %s/mini_proj_test_%0d_result.dat",input_dir,testNum));
 
     foreach (mem[key]) begin
       num_of_result_elements ++;
@@ -261,6 +261,7 @@ module tb_top();
         end
         else begin
           $display("[%d]:Difference = %7.20f, expected_result = %7.20f, dut_result = %7.20f", key, difference, expected_result, dut_result);
+          num_of_matching_result_elements++;
 
         end
       end
@@ -290,9 +291,9 @@ module tb_top();
     wait_n_clks(10);
     handshake();
     wait_n_clks(10);
-    //check_result(.testNum(testNum), .dirname(dirname), .filename(filename));
-
     check_result(.testNum(testNum), .dirname(dirname), .filename(filename));
+
+    //check_result(.testNum(testNum), .dirname(dirname), .filename(filename));
     wait_n_clks(10);
   end
   endtask
