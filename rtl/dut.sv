@@ -32,12 +32,31 @@ module MyDesign(
 );
 
 
-reg [`SRAM_DATA_RANGE] previous_value;     // register to store accumulated value
-wire[`SRAM_DATA_RANGE] current_result;
-wire[`SRAM_DATA_RANGE] mac_result_z;
-reg[`SRAM_DATA_RANGE] computed_result_reg;
-wire[`SRAM_DATA_RANGE] computed_result_wire;
-reg[`SRAM_DATA_RANGE] accumulated_reg;
+
+  reg                           get_array_size            ;
+  reg [1:0]                     read_addr_sel             ;
+  reg                           compute_accumulation      ;
+  reg                           save_array_size           ;
+  reg                           write_enable_sel          ;
+  reg                           switch_matrix_A_row_signal;
+  reg                           switch_matrix_B_read_cycle_signal;
+
+
+reg read_cycle_complete;
+reg clear_mac_signal;
+reg clear_mac_signal2;
+ reg [ `SRAM_DATA_RANGE/2 ] matrix_A_read_counter;
+ reg [ `SRAM_DATA_RANGE/2 ] matrix_A_read_cycle_counter; // Brows
+ reg [ `SRAM_DATA_RANGE/2 ] matrixB_Arow_cycle_counter; // Arows
+ reg [ `SRAM_DATA_RANGE/2 ] matrix_B_read_cycle_counter;
+
+
+ reg [`SRAM_DATA_RANGE] numOfReads;
+ reg [`SRAM_DATA_RANGE] currentWriteCount;
+ reg [`SRAM_DATA_RANGE ]   matrix_A_col_counter;
+ reg [`SRAM_DATA_RANGE ]   matrix_B_row_repeat_counter;
+ reg [`SRAM_DATA_RANGE ]   matrix_A_row_counter;
+
 
 reg [`SRAM_DATA_RANGE/2] matrixAColumns;       // register to number of memory locations to be read from Sram A and B
 reg [`SRAM_DATA_RANGE/2] matrixARows;          // register to number of memory locations to be read from Sram A and B
@@ -45,76 +64,31 @@ reg [`SRAM_DATA_RANGE/2] matrixARows;          // register to number of memory l
 reg [`SRAM_DATA_RANGE/2 ] matrixBColumns;       // register to number of memory locations to be read from Sram A and B
 reg [`SRAM_DATA_RANGE/2] matrixBRows;          // register to number of memory locations to be read from Sram A and B
 
-reg clear_mac_signal;
-reg clear_mac_signal2;
 
+
+wire  [31:0] sum_w;   // Result from FP_add
+reg   [31:0] sum_r;   // Input A of the FP_add 
+reg all_write_complete;
+reg dut_ready_reg; // register to store current DUT state
+reg compute_complete;
+ reg [`SRAM_DATA_RANGE] num_of_global_reads;
+ reg [`SRAM_DATA_RANGE] matrixBNumOfReads;
+ reg [`SRAM_DATA_RANGE] total_num_of_writes;
+
+ reg [`SRAM_DATA_RANGE] numOfReadsToSwitchOver;
 // Declare intermediate registers  to store the address of values to be read from SRAM A and B.
 reg [`SRAM_ADDR_RANGE] dut__tb__sram_input_read_address_reg;
 reg [`SRAM_ADDR_RANGE] dut__tb__sram_weight_read_address_reg;
 reg [`SRAM_ADDR_RANGE] dut__tb__sram_result_write_address_reg;
 reg [`SRAM_DATA_RANGE]dut__tb__sram_result_write_data_reg;
 reg [`SRAM_DATA_RANGE] sram_result_write_address_reg;
-
-
-
-  reg                           get_array_size            ;
-  reg [1:0]                     read_addr_sel             ;
-  reg                           all_element_read_completed;
-  reg                           compute_accumulation      ;
-  reg                           save_array_size           ;
-  reg                           write_enable_sel          ;
-  reg                           switch_matrix_A_row_signal;
-  wire  [31:0] sum_w;   // Result from FP_add
-  reg   [31:0] sum_r;   // Input A of the FP_add 
-
-reg dut_ready_reg; // register to store current DUT state
-reg write_enable;
-reg read_enable;
-reg compute_complete;
-reg read_cycle_complete;
-
-reg all_write_complete;
-
 reg dut__tb__sram_result_write_enable_reg;
 reg dut__tb__sram_weight_write_enable_reg;
 reg dut__tb__sram_input_write_enable_reg;
-
 reg [`SRAM_DATA_RANGE] default_mac_input;
-
 wire [`SRAM_DATA_RANGE] mac_input_a;
 wire [`SRAM_DATA_RANGE] mac_input_b;
 wire [`SRAM_DATA_RANGE] mac_input_c;
-
-
-
-reg [ `SRAM_DATA_RANGE/2 ] matrix_A_read_counter;
-reg [ `SRAM_DATA_RANGE/2 ] matrix_A_read_counter_1;
-reg [ `SRAM_DATA_RANGE/2 ] matrix_A_read_cycle_counter; // Brows
-reg [ `SRAM_DATA_RANGE/2 ] matrix_B_read_cycle_counter; // Arows
-reg [ `SRAM_DATA_RANGE/2 ] matrix_B_read_counter_1;
-reg [ `SRAM_DATA_RANGE/2 ] matrix_B_read_counter_2;
-reg [`SRAM_DATA_RANGE] global_read_cycle_counter;
-reg [`SRAM_DATA_RANGE] matrixBReadLimit;
-reg [`SRAM_DATA_RANGE] numOfReads;
-reg [`SRAM_DATA_RANGE] numOfWrites;
-
-reg [`SRAM_DATA_RANGE] totalNumOfWrites;
-
-reg [`SRAM_DATA_RANGE] numOfReadsToSwitchOver;
-
-reg [`SRAM_DATA_RANGE] currentWriteCount;
-
-reg [`SRAM_DATA_RANGE] matrixASwitchOverLimit;
-
-reg [`SRAM_DATA_RANGE ] matrix_C_result_write_address_reg;
-reg [`SRAM_DATA_RANGE ]    matrix_A_address;
-
- reg [`SRAM_DATA_RANGE ]   matrix_A_col_counter;
- reg [`SRAM_DATA_RANGE ]   matrix_B_row_repeat_counter;
-
- reg [`SRAM_DATA_RANGE ]   matrix_A_row_counter;
-
-
 
  typedef enum bit[2:0] {
     IDLE                              = 3'd0, 
@@ -136,8 +110,8 @@ if(!reset_n) begin
   // If reset stay in the idle state.
   dut_ready_reg <= 1'b1;
   current_state <= IDLE;
-  global_read_cycle_counter <= `SRAM_ADDR_WIDTH'b0;
-  matrixBReadLimit <= `SRAM_ADDR_WIDTH'b0;
+  num_of_global_reads <= `SRAM_ADDR_WIDTH'b0;
+  matrixBNumOfReads <= `SRAM_ADDR_WIDTH'b0;
 
 end else begin
   // if not in reset go to state 0 and read the 0th address.
@@ -161,6 +135,7 @@ always @(*) begin : proc_next_state_fsm
         write_enable_sel    = 1'b0;
         clear_mac_signal    = 1'b0;       
         switch_matrix_A_row_signal = 1'b0;
+        switch_matrix_B_read_cycle_signal = 1'b0;
         next_state          = READ_SRAM_ZERO_ADDR;
       end
       else begin
@@ -175,6 +150,7 @@ always @(*) begin : proc_next_state_fsm
         clear_mac_signal    = 1'b0;
         clear_mac_signal2     = 1'b0;       
         switch_matrix_A_row_signal = 1'b0;
+        switch_matrix_B_read_cycle_signal = 1'b0;
         next_state          = IDLE;
       end
     end
@@ -191,6 +167,7 @@ always @(*) begin : proc_next_state_fsm
       clear_mac_signal2     = 1'b0;
       write_enable_sel      = 1'b0;
       switch_matrix_A_row_signal = 1'b0;
+      switch_matrix_B_read_cycle_signal = 1'b0;
       next_state            = READ_SRAM_FIRST_ARRAY_ELEMENT;
     end 
 
@@ -200,30 +177,31 @@ always @(*) begin : proc_next_state_fsm
       read_addr_sel         = 2'b01;  // Increment the read addr
       compute_accumulation  = 1'b0;
       save_array_size       = 1'b1;
-      all_write_complete  = 1'b0;        
+      all_write_complete    = 1'b0;        
       read_cycle_complete   = 1'b0;
-      clear_mac_signal    = 1'b0;
+      clear_mac_signal      = 1'b0;
       clear_mac_signal2     = 1'b0;      
       write_enable_sel      = 1'b0;
       switch_matrix_A_row_signal = 1'b0;
-      matrixBReadLimit      = matrixBColumns * matrixBRows;
-      global_read_cycle_counter = matrixBReadLimit * matrixARows;
-      totalNumOfWrites =      (matrixARows * matrixBColumns) - 1;  
-      numOfReadsToSwitchOver =     matrixBColumns * matrixBRows ;
-      next_state            = READ_A_COL_ELEMENTS;    
+      switch_matrix_B_read_cycle_signal = 1'b0;
+      matrixBNumOfReads      = matrixBColumns * matrixBRows;
+      num_of_global_reads    = matrixBNumOfReads * matrixARows;
+      total_num_of_writes    = (matrixARows * matrixBColumns) - 1;  
+      numOfReadsToSwitchOver = matrixBColumns * matrixBRows ;
+      next_state             = READ_A_COL_ELEMENTS;    
     end
 
     READ_A_COL_ELEMENTS     : begin
-      dut_ready_reg             = 1'b0;
+      dut_ready_reg         = 1'b0;
       get_array_size        = 1'b0;
-      read_addr_sel         = ((numOfReads-1) % numOfReadsToSwitchOver == 0) ?  2'b10: 2'b01;  // Keep incrementing the read addr
+      read_addr_sel         = 2'b01;  // Keep incrementing the read addr
       compute_accumulation  = 1'b1;
       clear_mac_signal      = 1'b0;
       save_array_size       = 1'b1;
       all_write_complete    = 1'b0;
       write_enable_sel      = 1'b0;
-      switch_matrix_A_row_signal =  ((numOfReads-1) % numOfReadsToSwitchOver == 0) ?  1: 0;
-      //next_state            = read_cycle_complete ?  WRITE_ACCUMULATED_VALUE: READ_A_COL_ELEMENTS;
+      switch_matrix_A_row_signal =  ((numOfReads-1) % numOfReadsToSwitchOver == 0) ?  1: 0;      
+      switch_matrix_B_read_cycle_signal = ((numOfReads-1) % matrixBNumOfReads == 0) ?  1: 0; 
       next_state            = read_cycle_complete ? WRITE_ACCUMULATED_VALUE : READ_A_COL_ELEMENTS;
     end 
 
@@ -234,7 +212,8 @@ always @(*) begin : proc_next_state_fsm
       compute_accumulation  = 1'b1;
       read_cycle_complete   = 1'b0;
       save_array_size       = 1'b1;
-      write_enable_sel      = 1'b1;
+      write_enable_sel      = 1'b1;      
+      switch_matrix_B_read_cycle_signal = 1'b0;
       switch_matrix_A_row_signal = 1'b0;
       next_state            = MAC_CLEAR;
     end
@@ -249,22 +228,9 @@ always @(*) begin : proc_next_state_fsm
       write_enable_sel      = 1'b0;      
       clear_mac_signal      = 1'b1;
       clear_mac_signal2     = 1'b0;      
-      switch_matrix_A_row_signal = 1'b0;
-      //next_state            = all_write_complete ? COMPUTE_COMPLETE : READ_A_COL_ELEMENTS;
+      switch_matrix_A_row_signal = 1'b0;      
+      switch_matrix_B_read_cycle_signal = 1'b0;
       next_state            = all_write_complete ? COMPUTE_COMPLETE :  READ_A_COL_ELEMENTS;  
-    end
-
-    SWITCH_MATRIX_A_ROWS : begin
-      dut_ready_reg         = 1'b0;
-      get_array_size        = 1'b0;
-      read_addr_sel         = 2'b01;  // increment
-      compute_accumulation  = 1'b1;
-      read_cycle_complete   = 1'b0;
-      save_array_size       = 1'b1;
-      write_enable_sel      = 1'b0;      
-      clear_mac_signal      = 1'b1;
-      switch_matrix_A_row_signal = 1'b1;
-      next_state            = all_write_complete ? COMPUTE_COMPLETE : READ_A_COL_ELEMENTS; 
     end
 
     COMPUTE_COMPLETE        : begin
@@ -274,6 +240,8 @@ always @(*) begin : proc_next_state_fsm
       compute_accumulation  = 1'b0;
       save_array_size       = 1'b0;
       write_enable_sel      = 1'b0;
+      switch_matrix_A_row_signal = 1'b0;      
+      switch_matrix_B_read_cycle_signal = 1'b0;
       next_state            = IDLE;      
     end
 
@@ -283,7 +251,9 @@ always @(*) begin : proc_next_state_fsm
       read_addr_sel         = 2'b00;  
       compute_accumulation  = 1'b0;
       save_array_size       = 1'b0;
-      write_enable_sel      = 1'b0;      
+      write_enable_sel      = 1'b0;
+      switch_matrix_A_row_signal = 1'b0;      
+      switch_matrix_B_read_cycle_signal = 1'b0;      
       next_state            = IDLE;
     end
   endcase
@@ -307,12 +277,9 @@ always @(posedge clk) begin
     matrixBRows     <= `SRAM_ADDR_WIDTH'b0;
     matrix_A_read_counter    <= `SRAM_ADDR_WIDTH'b1;
     matrix_A_read_cycle_counter <= `SRAM_ADDR_WIDTH'b1;
-    matrix_B_read_cycle_counter <= `SRAM_ADDR_WIDTH'b1;
-    matrix_B_read_counter_1   <= `SRAM_ADDR_WIDTH'b1;
-    matrix_B_read_counter_2   <= `SRAM_ADDR_WIDTH'b1;
-    matrix_C_result_write_address_reg <= `SRAM_ADDR_WIDTH'b0;
+    matrixB_Arow_cycle_counter <= `SRAM_ADDR_WIDTH'b1;
+    matrix_B_read_cycle_counter   <= `SRAM_ADDR_WIDTH'b1;
     sram_result_write_address_reg <= `SRAM_ADDR_WIDTH'b0;
-    matrix_A_address <= 1;
     matrix_A_row_counter <= 1;
     matrix_A_col_counter <= 1;
     default_mac_input <= 0;
@@ -372,23 +339,23 @@ end
 always@(posedge clk) begin
 if (!reset_n) begin
     dut__tb__sram_weight_read_address_reg <= `SRAM_DATA_WIDTH'b0;
-    matrix_B_read_counter_1 <= `SRAM_DATA_WIDTH'b1;
     matrix_B_read_cycle_counter <= `SRAM_DATA_WIDTH'b1;
+    matrixB_Arow_cycle_counter <= `SRAM_DATA_WIDTH'b1;
 end
 else if(read_addr_sel == 2'b01)begin
             // Matrix B Address generator
-          if(matrix_B_read_cycle_counter <= matrixARows) begin
-            if(matrix_B_read_counter_1 <= matrixBReadLimit ) begin 
+          if(matrixB_Arow_cycle_counter <= matrixARows) begin
+            if(matrix_B_read_cycle_counter < matrixBNumOfReads ) begin 
                     
               dut__tb__sram_weight_read_address_reg <= dut__tb__sram_weight_read_address_reg + `SRAM_DATA_WIDTH'b1;
-              matrix_B_read_counter_1 <= matrix_B_read_counter_1 + `SRAM_DATA_WIDTH'b1;
+              matrix_B_read_cycle_counter <= matrix_B_read_cycle_counter + `SRAM_DATA_WIDTH'b1;
               
             end else begin
-              matrix_B_read_counter_1 <= `SRAM_DATA_WIDTH'b1;
+              matrix_B_read_cycle_counter <= `SRAM_DATA_WIDTH'b1;
               dut__tb__sram_weight_read_address_reg <= `SRAM_DATA_WIDTH'b1;
             end
           end else begin        
-              matrix_B_read_cycle_counter <= matrix_B_read_cycle_counter + `SRAM_DATA_WIDTH'b1;   
+              matrixB_Arow_cycle_counter <= matrixB_Arow_cycle_counter + `SRAM_DATA_WIDTH'b1;   
           end
       end
 end
@@ -402,7 +369,6 @@ if (!reset_n) begin
     dut__tb__sram_input_read_address_reg <= `SRAM_DATA_WIDTH'b0;
     matrix_A_col_counter <= `SRAM_DATA_WIDTH'b1;
     matrix_B_row_repeat_counter <= `SRAM_DATA_WIDTH'b1;
-    sram_result_write_address_reg <= `SRAM_DATA_WIDTH'b0;
 end
 else if(read_addr_sel == 2'b01)begin
             // Repeat the same row Brow times
@@ -425,10 +391,6 @@ else if(read_addr_sel == 2'b01)begin
 
                 // Update SRAM input read address for the first column of the next fetch
                 dut__tb__sram_input_read_address_reg <= (((matrix_A_row_counter - 1) * matrixAColumns) + matrix_A_col_counter);
-
-                // Set write enable to high after fetching all columns
-                //write_enable_sel <= 1'b1;
-                //sram_result_write_address_reg <= sram_result_write_address_reg + 1;
             end
           end 
   end
@@ -451,7 +413,7 @@ always @(posedge clk) begin : proc_write_completion
   if(!reset_n) begin    
     all_write_complete <= 1'b0;
   end else begin
-    all_write_complete <= (totalNumOfWrites == currentWriteCount) ? 1'b1 : 1'b0;
+    all_write_complete <= (total_num_of_writes == currentWriteCount) ? 1'b1 : 1'b0;
   end
 end
 
@@ -537,8 +499,9 @@ always@(posedge clk)begin
 if(clear_mac_signal2)begin
 clear_mac_signal2 = 0;
 end
-
 end
+
+
 
 assign mac_input_a = (clear_mac_signal |clear_mac_signal2) ? default_mac_input : tb__dut__sram_input_read_data;
 assign mac_input_b = (clear_mac_signal |clear_mac_signal2)  ? default_mac_input : tb__dut__sram_weight_read_data;
