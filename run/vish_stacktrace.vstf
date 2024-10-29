@@ -14,3 +14,6 @@
 # Date = "Apr 14 2021"
 # Platform = "linux"
 # 0    0x084f8a08: '<unknown (@0x84f8a08)>'
+# transcript error: error writing "stdout": broken pipe
+    while executing
+"puts -nonewline stdout $s"
