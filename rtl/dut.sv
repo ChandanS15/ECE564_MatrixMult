@@ -97,16 +97,14 @@ reg [`SRAM_DATA_RANGE] current_write_count;
     MAC_CLEAR                         = 3'd5, 
     COMPUTE_COMPLETE                  = 3'd6 } states;
 
-
-states current_state, next_state; /* synopsys enum states */
+states current_state, next_state;
 
 
 
 always @(posedge clk) begin : proc_next_state
 // Synchronous active low reset.
 if(!reset_n) begin
-  // If reset stay in the idle state.
-  dut_ready_reg <= 1'b1;
+  // If reset stay in the idle state.  
   current_state <= IDLE;
 
 end else begin
@@ -126,7 +124,7 @@ always @(*) begin : proc_next_state_fsm
         read_addr_sel       = 2'b00;
         compute_accumulation= 1'b0;
         save_array_size     = 1'b0;
-        write_enable    = 1'b0;
+        write_enable        = 1'b0;
         clear_mac_signal    = 1'b0;   
         matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
         matrix_B_Read_Complete_Cycle_Complete_Signal = 0;
@@ -137,7 +135,7 @@ always @(*) begin : proc_next_state_fsm
         get_array_size      = 1'b0;
         read_addr_sel       = 2'b00;
         compute_accumulation= 1'b0;
-        write_enable    = 1'b0;
+        write_enable        = 1'b0;
         save_array_size     = 1'b0;
         clear_mac_signal    = 1'b0;
         matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
@@ -153,7 +151,7 @@ always @(*) begin : proc_next_state_fsm
       compute_accumulation  = 1'b0;
       save_array_size       = 1'b0;
       clear_mac_signal      = 1'b0;
-      write_enable      = 1'b0;
+      write_enable          = 1'b0;
       matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
       matrix_B_Read_Complete_Cycle_Complete_Signal = 0;
       next_state            = READ_SRAM_FIRST_ARRAY_ELEMENT;
@@ -175,11 +173,11 @@ always @(*) begin : proc_next_state_fsm
     READ_ALL_ELEMENTS     : begin
       dut_ready_reg         = 1'b0;
       get_array_size        = 1'b0;
-      read_addr_sel         = read_cycle_complete ? 2'b10 : 2'b01;  // Keep incrementing the read addr
+      read_addr_sel         = read_cycle_complete ? ( all_write_complete ? 2'b00 : 2'b10) : 2'b01;  // Keep incrementing the read addr
       compute_accumulation  = 1'b1;
-      clear_mac_signal      = 0;
+      clear_mac_signal      = 1'b0;
       save_array_size       = 1'b1;
-      write_enable      = 0;
+      write_enable          = 1'b0;
       matrix_B_Read_Complete_Cycle_Complete_Signal = (matrix_B_Counter == (matrix_B_Columns * matrix_B_Rows) ) ? 1: 0;
       matrix_A_Read_Complete_Cycle_Complete_Signal = (matrix_A_column_counter == matrix_A_Columns ) ? 1 : 0;      
       next_state            = read_cycle_complete ? WRITE_ACCUMULATED_VALUE : READ_ALL_ELEMENTS;
@@ -188,23 +186,23 @@ always @(*) begin : proc_next_state_fsm
     WRITE_ACCUMULATED_VALUE : begin
       dut_ready_reg         = 1'b0;
       get_array_size        = 1'b0;
-      read_addr_sel         = 2'b10;  // Hold the address
+      read_addr_sel         = all_write_complete ? 2'b00 :2'b10;  // Hold the address
       compute_accumulation  = 1'b1;
       save_array_size       = 1'b1;
-      write_enable      = 1'b1;      
-      clear_mac_signal      = 0;
+      write_enable          = 1'b1;      
+      clear_mac_signal      = 1'b0;
       matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
       matrix_B_Read_Complete_Cycle_Complete_Signal = 0;
-      next_state            = MAC_CLEAR;
+      next_state            = all_write_complete ? COMPUTE_COMPLETE :MAC_CLEAR;
     end
 
     MAC_CLEAR : begin
       dut_ready_reg         = 1'b0;
       get_array_size        = 1'b0;
-      read_addr_sel         = 2'b01;  // increment
+      read_addr_sel         = all_write_complete ? 2'b00 : 2'b01;  // increment
       compute_accumulation  = 1'b1;
       save_array_size       = 1'b1;
-      write_enable      = 1'b0;      
+      write_enable          = 1'b0;      
       clear_mac_signal      = 1'b1;
       matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
       matrix_B_Read_Complete_Cycle_Complete_Signal = 0;
@@ -220,7 +218,7 @@ always @(*) begin : proc_next_state_fsm
       matrix_A_Read_Complete_Cycle_Complete_Signal = 0;
       matrix_B_Read_Complete_Cycle_Complete_Signal = 0;
       save_array_size       = 1'b0;
-      write_enable      = 1'b0;
+      write_enable          = 1'b0;
       next_state            = IDLE;      
     end
 
@@ -272,8 +270,6 @@ end
 // SRAM read address generator
 always @(posedge clk) begin : proc_matrices_read
     if (!reset_n) begin
-      dut__tb__sram_input_read_address_reg  <= 0;
-      dut__tb__sram_weight_read_address_reg  <= 0;
 
       matrix_A_row_counter <= 1;
       matrix_A_column_counter <= 0;
@@ -292,6 +288,10 @@ always @(posedge clk) begin : proc_matrices_read
       2'b00 :begin 
         dut__tb__sram_input_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
         dut__tb__sram_weight_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
+        globalReadCounter <= 0;
+        matrix_A_column_counter <= 0;
+        matrix_A_row_counter <= 1;
+        matrix_B_Counter <= 0;
       end
 
       2'b01: begin
@@ -300,7 +300,7 @@ always @(posedge clk) begin : proc_matrices_read
 
         // Matrix A Address Generator
         dut__tb__sram_input_read_address_reg <= matrix_A_Read_Complete_Cycle_Complete_Signal ? ( matrix_B_Read_Complete_Cycle_Complete_Signal ? (dut__tb__sram_input_read_address_reg + 1) : (( matrix_A_row_counter - 1) *matrix_A_Columns + 1) ) : (dut__tb__sram_input_read_address_reg  + 1);
-        matrix_A_column_counter <= matrix_A_Read_Complete_Cycle_Complete_Signal ? 1 : (matrix_A_column_counter + 1);
+        matrix_A_column_counter <= matrix_A_Read_Complete_Cycle_Complete_Signal ? 1 : (matrix_A_column_counter + 1) ;
         matrix_A_row_counter <= matrix_B_Read_Complete_Cycle_Complete_Signal ? (matrix_A_row_counter + 1) : matrix_A_row_counter;
 
         // Matrix B Address Generator
@@ -359,7 +359,7 @@ always @(posedge clk) begin : proc_write_address_increment
   if(!reset_n) begin  
     current_write_count <= 0;
   end else begin
-      current_write_count <= write_enable ? current_write_count + 1 : current_write_count;
+      current_write_count <= compute_complete ? 0 : write_enable ? current_write_count + 1 : current_write_count;
   end
 end
 
@@ -373,7 +373,7 @@ always @(posedge clk) begin : proc_sram_write_address_r
   if(!reset_n) begin
     dut__tb__sram_result_write_address_reg <= 1'b0;
   end else begin
-    dut__tb__sram_result_write_address_reg <= (write_enable) ? dut__tb__sram_result_write_address_reg + 1 : dut__tb__sram_result_write_address_reg ; 
+    dut__tb__sram_result_write_address_reg <= compute_complete ? 0 : ((write_enable) ? dut__tb__sram_result_write_address_reg + 1 : dut__tb__sram_result_write_address_reg) ; 
   end
 end
 
