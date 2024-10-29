@@ -1,7 +1,7 @@
 
 // vlog -sv +incdir+../rtl/common ../rtl/dut.sv
 
-`include "./common/common.vh"
+`include "common.vh"
 
 //`include "common.vh"
 module MyDesign(
@@ -62,7 +62,6 @@ reg [`SRAM_DATA_RANGE] sram_result_write_address_reg;
   reg   [31:0] accumulator_addend;   // Input A of the FP_add 
 
 reg dut_ready_reg; // register to store current DUT state
-reg write_enable;
 reg compute_complete;
 reg read_cycle_complete;
 
@@ -89,7 +88,6 @@ reg matrix_A_Read_Complete_Cycle_Complete_Signal;
 reg [`SRAM_DATA_RANGE] read_cycle_counter;
 reg [`SRAM_DATA_RANGE] current_write_count;
 
-
  typedef enum bit[2:0] {
     IDLE                              = 3'd0, 
     READ_SRAM_ZERO_ADDR               = 3'd1,   
@@ -99,7 +97,8 @@ reg [`SRAM_DATA_RANGE] current_write_count;
     MAC_CLEAR                         = 3'd5, 
     COMPUTE_COMPLETE                  = 3'd6 } states;
 
-states current_state, next_state;
+
+states current_state, next_state; /* synopsys enum states */
 
 
 
@@ -116,7 +115,7 @@ end else begin
 end
 end
 
-
+/* next state logic and output logic – combined so as to share state decode logic */
 always @(*) begin : proc_next_state_fsm
   case (current_state)
 
@@ -181,7 +180,7 @@ always @(*) begin : proc_next_state_fsm
       clear_mac_signal      = 0;
       save_array_size       = 1'b1;
       write_enable      = 0;
-      matrix_B_Read_Complete_Cycle_Complete_Signal = (matrix_B_Counter == matrix_B_Columns * matrix_B_Rows ) ? 1: 0;
+      matrix_B_Read_Complete_Cycle_Complete_Signal = (matrix_B_Counter == (matrix_B_Columns * matrix_B_Rows) ) ? 1: 0;
       matrix_A_Read_Complete_Cycle_Complete_Signal = (matrix_A_column_counter == matrix_A_Columns ) ? 1 : 0;      
       next_state            = read_cycle_complete ? WRITE_ACCUMULATED_VALUE : READ_ALL_ELEMENTS;
     end 
@@ -256,11 +255,6 @@ always @(posedge clk) begin : proc_read_zero_address
     matrix_A_Rows     <= `SRAM_ADDR_WIDTH'b0;
     matrix_B_Columns  <= `SRAM_ADDR_WIDTH'b0;
     matrix_B_Rows     <= `SRAM_ADDR_WIDTH'b0;
-    sram_result_write_address_reg <= `SRAM_ADDR_WIDTH'b0;
-    matrix_B_Counter <= 0;
-    matrix_A_column_counter <= 0;
-    matrix_B_Read_Complete_Cycle_Complete_Signal <= 0;
-    matrix_A_Read_Complete_Cycle_Complete_Signal <= 0;
     dut__tb__sram_result_write_enable_reg <= 1'b0;
     dut__tb__sram_input_write_enable_reg <= 1'b0;
     dut__tb__sram_weight_write_enable_reg <= 1'b0;
@@ -280,6 +274,14 @@ always @(posedge clk) begin : proc_matrices_read
     if (!reset_n) begin
       dut__tb__sram_input_read_address_reg  <= 0;
       dut__tb__sram_weight_read_address_reg  <= 0;
+
+      matrix_A_row_counter <= 1;
+      matrix_A_column_counter <= 0;
+      dut__tb__sram_input_read_address_reg <= 0;
+
+
+      dut__tb__sram_weight_read_address_reg <= 0;
+      matrix_B_Counter <= 0;
       
       globalReadCounter <= 0;
     end
@@ -288,13 +290,22 @@ always @(posedge clk) begin : proc_matrices_read
       case(read_addr_sel)
 
       2'b00 :begin 
-                  dut__tb__sram_input_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
-                  dut__tb__sram_weight_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
+        dut__tb__sram_input_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
+        dut__tb__sram_weight_read_address_reg <= `SRAM_ADDR_WIDTH'b0;
       end
 
       2'b01: begin
 
         globalReadCounter <= globalReadCounter + 1;
+
+        // Matrix A Address Generator
+        dut__tb__sram_input_read_address_reg <= matrix_A_Read_Complete_Cycle_Complete_Signal ? ( matrix_B_Read_Complete_Cycle_Complete_Signal ? (dut__tb__sram_input_read_address_reg + 1) : (( matrix_A_row_counter - 1) *matrix_A_Columns + 1) ) : (dut__tb__sram_input_read_address_reg  + 1);
+        matrix_A_column_counter <= matrix_A_Read_Complete_Cycle_Complete_Signal ? 1 : (matrix_A_column_counter + 1);
+        matrix_A_row_counter <= matrix_B_Read_Complete_Cycle_Complete_Signal ? (matrix_A_row_counter + 1) : matrix_A_row_counter;
+
+        // Matrix B Address Generator
+        dut__tb__sram_weight_read_address_reg <= matrix_B_Read_Complete_Cycle_Complete_Signal ? 1 : dut__tb__sram_weight_read_address_reg + 1;
+        matrix_B_Counter <= matrix_B_Read_Complete_Cycle_Complete_Signal ? 1: matrix_B_Counter + 1; 
   
 
       end
@@ -316,35 +327,9 @@ always @(posedge clk) begin : proc_matrices_read
         
 end
 
-            // Matrix B Address generator
-always@(posedge clk) begin : proc_matrix_B_read
-if (!reset_n) begin
-    read_cycle_counter  <= `SRAM_DATA_WIDTH'b0;
-end
-else if(read_addr_sel == 2'b01)begin
-  
-    dut__tb__sram_weight_read_address_reg <= matrix_B_Read_Complete_Cycle_Complete_Signal ? 1 : dut__tb__sram_weight_read_address_reg + 1;
-    matrix_B_Counter <= matrix_B_Read_Complete_Cycle_Complete_Signal ? 1: matrix_B_Counter + 1;    
-end
-
-end
-
 
 assign dut__tb__sram_weight_read_address = dut__tb__sram_weight_read_address_reg;
 
-
-always@(posedge clk) begin : proc_matrix_A_read
-if (!reset_n) begin
-    sram_result_write_address_reg <= `SRAM_DATA_WIDTH'b0;
-    matrix_A_row_counter <= 1;
-end
-else if(read_addr_sel == 2'b01)begin : proc_matrix_A_read
-
-    dut__tb__sram_input_read_address_reg <= matrix_A_Read_Complete_Cycle_Complete_Signal ? ( matrix_B_Read_Complete_Cycle_Complete_Signal ? dut__tb__sram_input_read_address_reg + 1 : (( matrix_A_row_counter - 1) *matrix_A_Columns + 1) ) : dut__tb__sram_input_read_address_reg  + 1;
-    matrix_A_column_counter <= matrix_A_Read_Complete_Cycle_Complete_Signal ? 1 : matrix_A_column_counter + 1;
-    matrix_A_row_counter <= matrix_B_Read_Complete_Cycle_Complete_Signal ? matrix_A_row_counter + 1 : matrix_A_row_counter;
-  end
-end
 
 
 assign dut__tb__sram_input_read_address = dut__tb__sram_input_read_address_reg;
