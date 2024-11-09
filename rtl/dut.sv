@@ -62,8 +62,7 @@ reg [`SRAM_ADDR_RANGE] dut__tb__sram_scratchpad_write_address_reg;
 
 reg [`SRAM_DATA_RANGE] dut__tb__sram_result_write_data_reg;
 reg [`SRAM_DATA_RANGE] dut__tb__sram_scratchpad_write_data_reg;
-reg [`SRAM_ADDR_RANGE]  weight_matrix_column_counter;
-reg [`SRAM_ADDR_RANGE]  weight_matrix_row_counter;
+
 
 
   reg                           get_array_size            ;
@@ -118,9 +117,7 @@ reg switch_to_next_weight_matrix_signal;
 reg [`SRAM_DATA_RANGE] read_cycle_counter;
 reg [`SRAM_DATA_RANGE] current_write_count;
 
-reg [`SRAM_DATA_RANGE] score_matrix_current_write;
-reg [`SRAM_DATA_RANGE] attention_matrix_current_write;
-
+reg [`SRAM_DATA_RANGE] current_write_after_transpose;
 reg [`SRAM_DATA_RANGE] transposedAddendReg;
 
  typedef enum bit[4:0] {
@@ -269,7 +266,7 @@ always @(*) begin : proc_next_state_fsm
       save_array_size       = 1'b1;
       write_enable          = 1'b0;      
       clear_mac_signal      = 1'b1;
-      score_matrix_multiplication_enable =  start_score_multiplication ? 1 : ( ( attention_matrix_multiplication_enable ) ? 0 : score_matrix_multiplication_enable);
+      score_matrix_multiplication_enable =  start_score_multiplication ? 1 : score_matrix_multiplication_enable;
       attention_matrix_multiplication_enable = start_attention_multiplication ? 1 : attention_matrix_multiplication_enable;
       input_matrix_Read_Complete_Cycle_Complete_Signal = 0;
       weight_matrix_Read_Complete_Cycle_Complete_Signal = 0;      
@@ -467,25 +464,11 @@ always @(posedge clk) begin : proc_matrices_read
         input_matrix_column_counter <= 0;
         input_matrix_row_counter <= 1;
         weight_matrix_counter <= 0;
-        end
 
-        if(start_attention_multiplication) begin
-        
+        // if(score_matrix_multiplication) begin
+        //   input_matrix_row_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? (input_matrix_row_counter + 1) : input_matrix_row_counter;
+        // end
 
-          dut__tb__sram_result_read_address_reg <=  value_matrix_base_address ;
-          // reading value matrix from scratchpad
-          dut__tb__sram_scratchpad_read_address_reg <= score_matrix_base_address  ; 
-
-          // reading score amtrix  from result matrix
-          
-
-          attention_matrix_read_counter_start <= globalReadCounter - 1;
-
-          // reset the counters to read matrices
-
-          input_matrix_column_counter <= 0;
-          input_matrix_row_counter <= 1;
-          weight_matrix_counter <= 0;
 
         end
 
@@ -530,8 +513,6 @@ always @(posedge clk) begin : proc_matrices_read
 
         dut__tb__sram_scratchpad_read_address_reg <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? key_matrix_base_address : dut__tb__sram_scratchpad_read_address_reg + 1;
         weight_matrix_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : weight_matrix_counter + 1; 
-
-
 
       end
 
@@ -582,9 +563,7 @@ always @(posedge clk) begin : proc_read_cycle_computation
     read_cycle_complete <= 1'b0;
   end else begin
     if(score_matrix_multiplication_enable)
-    read_cycle_complete <= ( globalReadCounter == (score_matrix_read_counter_start + (weight_matrix_columns* ( 1 + score_matrix_current_write))  ) ) ? 1'b1 : 1'b0;   
-    else if(attention_matrix_multiplication_enable)
-    read_cycle_complete <= ( globalReadCounter == (attention_matrix_read_counter_start + (input_matrix_rows* ( 1 + attention_matrix_current_write))  ) ) ? 1'b1 : 1'b0;
+    read_cycle_complete <= ( globalReadCounter == (score_matrix_read_counter_start + (weight_matrix_columns* ( 1 + current_write_after_transpose))  ) ) ? 1'b1 : 1'b0;   
     else
     read_cycle_complete <= ( globalReadCounter == (current_write_count ? (input_matrix_columns* ( 1 + current_write_count))  : input_matrix_columns ) ) ? 1'b1 : 1'b0;    
   end
@@ -605,14 +584,11 @@ end
 always @(posedge clk) begin : proc_write_address_increment
   if(!reset_n) begin  
     current_write_count <= 0;
-    score_matrix_current_write<= 0;
+    current_write_after_transpose<= 0;
   end else begin
       current_write_count <= compute_complete ? 0 : write_enable ? current_write_count + 1 : current_write_count;
 if(score_matrix_multiplication_enable)
-      score_matrix_current_write <= compute_complete ? 0 : write_enable ? score_matrix_current_write + 1 : score_matrix_current_write;
-if(attention_matrix_multiplication_enable)
-      attention_matrix_current_write <= compute_complete ? 0 : write_enable ? attention_matrix_current_write + 1 : attention_matrix_current_write;
-
+      current_write_after_transpose <= dut_ready_reg ? 0 : (compute_complete ? 0 : write_enable ? current_write_after_transpose + 1 : current_write_after_transpose);
   end
 end
 
@@ -624,7 +600,7 @@ always @(posedge clk) begin : proc_current_matrix_computation
   end else begin
     current_matrix <= dut_ready_reg ? 1 : ( switch_to_next_weight_matrix_signal ? current_matrix + 1 : current_matrix);
     start_score_multiplication <= ( globalReadCounter == ( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns) + 1) ? 1 : 0;
-    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*input_matrix_columns) + (( input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
+    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*input_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
   end
 end
 
@@ -664,7 +640,7 @@ end
 assign dut__tb__sram_result_write_data = dut__tb__sram_result_write_data_reg;
 assign dut__tb__sram_scratchpad_write_data = dut__tb__sram_scratchpad_write_data_reg;
 
-assign accumulator_ouput = (clear_mac_signal)  ? 0 : (tb__dut__sram_input_read_data * tb__dut__sram_weight_read_data) + accumulator_addend;
+assign accumulator_ouput = (clear_mac_signal | score_matrix_multiplication_enable)  ? 0 : (tb__dut__sram_input_read_data * tb__dut__sram_weight_read_data) + accumulator_addend;
 
 assign transposed_accumulator_output = (clear_mac_signal)  ? 0 : (tb__dut__sram_result_read_data * tb__dut__sram_scratchpad_read_data) + transposedAddendReg;
 
