@@ -649,7 +649,7 @@ always @(posedge clk) begin : proc_current_matrix_computation
   end else begin
     current_matrix <= dut_ready_reg ? 1 : ( switch_to_next_weight_matrix_signal ? current_matrix + 1 : current_matrix);
     start_score_multiplication <= ( globalReadCounter == ( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns) + 1) ? 1 : 0;
-    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*input_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
+    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*weight_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
   end
 end
 
