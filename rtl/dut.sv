@@ -262,7 +262,7 @@ always @(*) begin : proc_next_state_fsm
     MAC_CLEAR : begin
       dut_ready_reg         = 1'b0;
       get_array_size        = 1'b0;
-      read_addr_sel         = all_write_complete_signal ? 0 : ( (start_score_multiplication | score_matrix_multiplication_enable | attention_matrix_multiplication_enable) ? 4 : 1);  // increment
+      read_addr_sel         = all_write_complete_signal ? 0 : ( (start_score_multiplication | score_matrix_multiplication_enable | attention_matrix_multiplication_enable | start_attention_multiplication) ? (attention_matrix_multiplication_enable | start_attention_multiplication )? 5 : 4 : 1);  // increment
       compute_accumulation  = 1'b1;
       save_array_size       = 1'b1;
       write_enable          = 1'b0;      
@@ -272,7 +272,7 @@ always @(*) begin : proc_next_state_fsm
       input_matrix_Read_Complete_Cycle_Complete_Signal = 0;
       weight_matrix_Read_Complete_Cycle_Complete_Signal = 0;      
       switch_to_next_weight_matrix_signal = 0;
-      next_state            = all_write_complete_signal ? COMPUTE_COMPLETE : ((start_score_multiplication | score_matrix_multiplication_enable | start_attention_multiplication | attention_matrix_multiplication_enable) ? ((start_score_multiplication |start_attention_multiplication) ? SCORE_MATRIX_FIRST_ARRAY : SCORE_MATRIX_ALL_ARRAY) : READ_ALL_ELEMENTS);  
+      next_state            = all_write_complete_signal ? COMPUTE_COMPLETE : ((start_score_multiplication | score_matrix_multiplication_enable | start_attention_multiplication | attention_matrix_multiplication_enable) ? ((start_score_multiplication |start_attention_multiplication) ? start_attention_multiplication? ATTENTION_MATRIX_FIRST_ARRAY : SCORE_MATRIX_FIRST_ARRAY : attention_matrix_multiplication_enable ?ATTENTION_MATRIX_ALL_ARRAY :SCORE_MATRIX_ALL_ARRAY) : READ_ALL_ELEMENTS);  
     end
 
 
@@ -308,6 +308,42 @@ always @(*) begin : proc_next_state_fsm
       weight_matrix_Read_Complete_Cycle_Complete_Signal = (weight_matrix_counter == ((weight_matrix_columns * input_matrix_rows)) - 1 ) ? 1: 0;
       switch_to_next_weight_matrix_signal =  (globalReadCounter  == ( current_matrix * input_matrix_rows) * (weight_matrix_columns * weight_matrix_rows)) ? 1 : 0;
       next_state            = read_cycle_complete ? WRITE_ACCUMULATED_VALUE : SCORE_MATRIX_ALL_ARRAY;
+    end
+
+    ATTENTION_MATRIX_FIRST_ARRAY : begin
+
+      dut_ready_reg         = 1'b0;
+      get_array_size        = 1'b0;
+      read_addr_sel         = 5  ;  // Increment the read addr
+      compute_accumulation  = 1'b1;
+      save_array_size       = 1'b1; 
+      clear_mac_signal      = 1'b0;      
+      write_enable          = 1'b0;
+      score_matrix_multiplication_enable = 0;      
+      attention_matrix_multiplication_enable = attention_matrix_multiplication_enable;
+      input_matrix_Read_Complete_Cycle_Complete_Signal =  (input_matrix_column_counter == (input_matrix_rows - 1)) ? 1'b1 : 1'b0;
+      //weight_matrix_Read_Complete_Cycle_Complete_Signal = 0;
+      weight_matrix_Read_Complete_Cycle_Complete_Signal = (weight_matrix_counter ==  (input_matrix_rows*weight_matrix_columns - 1) ) ? 1: 0;
+
+      switch_to_next_weight_matrix_signal = 0;
+      next_state            = ATTENTION_MATRIX_ALL_ARRAY;    
+
+    end
+
+    ATTENTION_MATRIX_ALL_ARRAY    : begin
+      dut_ready_reg         = 1'b0;
+      get_array_size        = 1'b0;
+      read_addr_sel         = read_cycle_complete ? ( all_write_complete_signal ? 0 : 2) : 5;  // Keep incrementing the read addr
+      compute_accumulation  = 1'b1;
+      clear_mac_signal      = 1'b0;
+      save_array_size       = 1'b1;
+      write_enable          = 1'b0;
+      score_matrix_multiplication_enable = 0;      
+      attention_matrix_multiplication_enable = attention_matrix_multiplication_enable;
+      input_matrix_Read_Complete_Cycle_Complete_Signal = (input_matrix_column_counter == (input_matrix_rows - 1)) ? 1'b1 : 1'b0;        
+      weight_matrix_Read_Complete_Cycle_Complete_Signal = (weight_matrix_counter == ((weight_matrix_columns * input_matrix_rows)) - 1 ) ? 1: 0;
+      switch_to_next_weight_matrix_signal =  (globalReadCounter  == ( current_matrix * input_matrix_rows) * (weight_matrix_columns * weight_matrix_rows)) ? 1 : 0;
+      next_state            = read_cycle_complete ? WRITE_ACCUMULATED_VALUE : ATTENTION_MATRIX_ALL_ARRAY;
     end 
 
     COMPUTE_COMPLETE        : begin
@@ -466,7 +502,7 @@ always @(posedge clk) begin : proc_matrices_read
         input_matrix_row_counter <= 1;
         weight_matrix_counter <= 0;
 
-          weight_matrix_row_counter <= 1;
+                  weight_matrix_row_counter <= 1;
           weight_matrix_column_counter <= 1;
 
         // if(score_matrix_multiplication) begin
@@ -526,7 +562,9 @@ always @(posedge clk) begin : proc_matrices_read
         globalReadCounter <= globalReadCounter + 1;
         // score marix
 
-        dut__tb__sram_result_read_address_reg <= input_matrix_Read_Complete_Cycle_Complete_Signal ? ( score_matrix_base_address  + ( input_matrix_row_counter - 1) * input_matrix_rows) : start_attention_multiplication ? score_matrix_base_address + 1:(dut__tb__sram_result_read_address_reg  + 1);
+        dut__tb__sram_result_read_address_reg <= input_matrix_Read_Complete_Cycle_Complete_Signal ? 
+                                                ( weight_matrix_Read_Complete_Cycle_Complete_Signal ?                                                 
+                                                  (dut__tb__sram_result_read_address_reg + 1) : (score_matrix_base_address + ( input_matrix_row_counter - 1) * input_matrix_rows) ) : (dut__tb__sram_result_read_address_reg  + 1);
 
         input_matrix_column_counter <= input_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : (input_matrix_column_counter + 1) ;
         input_matrix_row_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? (input_matrix_row_counter + 1) : input_matrix_row_counter;
@@ -535,12 +573,9 @@ always @(posedge clk) begin : proc_matrices_read
 
         
 
-        dut__tb__sram_scratchpad_read_address_reg <=(value_matrix_base_address  + ((weight_matrix_row_counter - 1)*weight_matrix_columns)  +  (weight_matrix_column_counter - 1)              ) ;
-        
+        dut__tb__sram_scratchpad_read_address_reg <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? value_matrix_base_address : (input_matrix_Read_Complete_Cycle_Complete_Signal ? (value_matrix_base_address + weight_matrix_row_counter) : dut__tb__sram_scratchpad_read_address_reg + weight_matrix_columns);
         weight_matrix_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : weight_matrix_counter + 1;
-        weight_matrix_row_counter <=  input_matrix_Read_Complete_Cycle_Complete_Signal ? 1 : (weight_matrix_row_counter + 1) > input_matrix_rows ? weight_matrix_row_counter : weight_matrix_row_counter + 1;
-        weight_matrix_column_counter <= input_matrix_Read_Complete_Cycle_Complete_Signal ? weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 :weight_matrix_column_counter + 1 : weight_matrix_column_counter;
-
+        weight_matrix_row_counter <=  input_matrix_Read_Complete_Cycle_Complete_Signal ? (weight_matrix_Read_Complete_Cycle_Complete_Signal ? 1 : weight_matrix_row_counter + 1): weight_matrix_row_counter;
 
 
 
@@ -614,7 +649,7 @@ always @(posedge clk) begin : proc_current_matrix_computation
   end else begin
     current_matrix <= dut_ready_reg ? 1 : ( switch_to_next_weight_matrix_signal ? current_matrix + 1 : current_matrix);
     start_score_multiplication <= ( globalReadCounter == ( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns) + 1) ? 1 : 0;
-    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*weight_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
+    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*input_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
   end
 end
 
