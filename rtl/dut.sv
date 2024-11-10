@@ -63,7 +63,8 @@ reg [`SRAM_ADDR_RANGE] dut__tb__sram_scratchpad_write_address_reg;
 reg [`SRAM_DATA_RANGE] dut__tb__sram_result_write_data_reg;
 reg [`SRAM_DATA_RANGE] dut__tb__sram_scratchpad_write_data_reg;
 
-
+reg [`SRAM_ADDR_RANGE]  weight_matrix_column_counter;
+reg [`SRAM_ADDR_RANGE]  weight_matrix_row_counter;
 
   reg                           get_array_size            ;
   reg [4:0]                     read_addr_sel             ;
@@ -117,9 +118,9 @@ reg switch_to_next_weight_matrix_signal;
 reg [`SRAM_DATA_RANGE] read_cycle_counter;
 reg [`SRAM_DATA_RANGE] current_write_count;
 
-reg [`SRAM_DATA_RANGE] current_write_after_transpose;
+reg [`SRAM_DATA_RANGE] score_matrix_current_write;
 reg [`SRAM_DATA_RANGE] transposedAddendReg;
-
+reg [`SRAM_DATA_RANGE] attention_matrix_current_write;
  typedef enum bit[4:0] {
     IDLE                              = 0, 
     READ_SRAM_ZERO_ADDR               = 1,   
@@ -452,10 +453,10 @@ always @(posedge clk) begin : proc_matrices_read
        if(start_attention_multiplication) begin
         
         // reading value matrix from scratchpad
-        dut__tb__sram_scratchpad_read_address_reg <=   score_matrix_base_address; 
+        dut__tb__sram_scratchpad_read_address_reg <=   value_matrix_base_address; 
 
         // reading score amtrix  from result matrix
-        dut__tb__sram_result_read_address_reg <= value_matrix_base_address;
+        dut__tb__sram_result_read_address_reg <= score_matrix_base_address ;
 
         attention_matrix_read_counter_start <= globalReadCounter - 1;
 
@@ -464,6 +465,9 @@ always @(posedge clk) begin : proc_matrices_read
         input_matrix_column_counter <= 0;
         input_matrix_row_counter <= 1;
         weight_matrix_counter <= 0;
+
+          weight_matrix_row_counter <= 1;
+          weight_matrix_column_counter <= 1;
 
         // if(score_matrix_multiplication) begin
         //   input_matrix_row_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? (input_matrix_row_counter + 1) : input_matrix_row_counter;
@@ -519,20 +523,23 @@ always @(posedge clk) begin : proc_matrices_read
       5: begin
         // score marix
 
-        dut__tb__sram_result_read_address_reg <= input_matrix_Read_Complete_Cycle_Complete_Signal ? 
-                                                ( weight_matrix_Read_Complete_Cycle_Complete_Signal ?                                                 
-                                                  (dut__tb__sram_result_read_address_reg + 1) : (( input_matrix_row_counter - 1) * input_matrix_columns - 1) ) : (dut__tb__sram_result_read_address_reg  + 1);
+        globalReadCounter <= globalReadCounter + 1;
+        // score marix
+
+        dut__tb__sram_result_read_address_reg <= input_matrix_Read_Complete_Cycle_Complete_Signal ? ( score_matrix_base_address  + ( input_matrix_row_counter - 1) * input_matrix_rows) : start_attention_multiplication ? score_matrix_base_address + 1:(dut__tb__sram_result_read_address_reg  + 1);
 
         input_matrix_column_counter <= input_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : (input_matrix_column_counter + 1) ;
         input_matrix_row_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? (input_matrix_row_counter + 1) : input_matrix_row_counter;
 
-        //value
+        //Matrix B Address Generator
 
         
 
-        dut__tb__sram_scratchpad_read_address_reg <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? key_matrix_base_address : dut__tb__sram_scratchpad_read_address_reg + 1;
-        weight_matrix_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : weight_matrix_counter + 1; 
-
+        dut__tb__sram_scratchpad_read_address_reg <=(value_matrix_base_address  + ((weight_matrix_row_counter - 1)*weight_matrix_columns)  +  (weight_matrix_column_counter - 1)              ) ;
+        
+        weight_matrix_counter <= weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 : weight_matrix_counter + 1;
+        weight_matrix_row_counter <=  input_matrix_Read_Complete_Cycle_Complete_Signal ? 1 : (weight_matrix_row_counter + 1) > input_matrix_rows ? weight_matrix_row_counter : weight_matrix_row_counter + 1;
+        weight_matrix_column_counter <= input_matrix_Read_Complete_Cycle_Complete_Signal ? weight_matrix_Read_Complete_Cycle_Complete_Signal ? 0 :weight_matrix_column_counter + 1 : weight_matrix_column_counter;
 
 
 
@@ -562,9 +569,11 @@ always @(posedge clk) begin : proc_read_cycle_computation
   if(!reset_n) begin    
     read_cycle_complete <= 1'b0;
   end else begin
-    if(score_matrix_multiplication_enable)
-    read_cycle_complete <= ( globalReadCounter == (score_matrix_read_counter_start + (weight_matrix_columns* ( 1 + current_write_after_transpose))  ) ) ? 1'b1 : 1'b0;   
-    else
+   if(score_matrix_multiplication_enable)
+	 read_cycle_complete <= ( globalReadCounter == (score_matrix_read_counter_start + (weight_matrix_columns* ( 1 + score_matrix_current_write))  ) ) ? 1'b1 : 1'b0;   
+   else if(attention_matrix_multiplication_enable)
+        read_cycle_complete <= ( globalReadCounter == (attention_matrix_read_counter_start + (input_matrix_rows* ( 1 + attention_matrix_current_write))  ) ) ? 1'b1 : 1'b0;    
+  else    
     read_cycle_complete <= ( globalReadCounter == (current_write_count ? (input_matrix_columns* ( 1 + current_write_count))  : input_matrix_columns ) ) ? 1'b1 : 1'b0;    
   end
 end
@@ -584,11 +593,16 @@ end
 always @(posedge clk) begin : proc_write_address_increment
   if(!reset_n) begin  
     current_write_count <= 0;
-    current_write_after_transpose<= 0;
+    score_matrix_current_write<= 0;
+    attention_matrix_current_write <= 0;
   end else begin
       current_write_count <= compute_complete ? 0 : write_enable ? current_write_count + 1 : current_write_count;
 if(score_matrix_multiplication_enable)
-      current_write_after_transpose <= dut_ready_reg ? 0 : (compute_complete ? 0 : write_enable ? current_write_after_transpose + 1 : current_write_after_transpose);
+      score_matrix_current_write <= dut_ready_reg ? 0 : (compute_complete ? 0 : write_enable ? score_matrix_current_write + 1 : score_matrix_current_write);
+if(attention_matrix_multiplication_enable)
+      attention_matrix_current_write <= dut_ready_reg ? 0 : (compute_complete ? 0 : write_enable ? attention_matrix_current_write + 1 : attention_matrix_current_write);
+
+  
   end
 end
 
@@ -600,7 +614,7 @@ always @(posedge clk) begin : proc_current_matrix_computation
   end else begin
     current_matrix <= dut_ready_reg ? 1 : ( switch_to_next_weight_matrix_signal ? current_matrix + 1 : current_matrix);
     start_score_multiplication <= ( globalReadCounter == ( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns) + 1) ? 1 : 0;
-    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*input_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
+    start_attention_multiplication <=  ( globalReadCounter == (input_matrix_rows * input_matrix_rows*weight_matrix_columns) + (( 3 * input_matrix_columns ) * (input_matrix_rows * weight_matrix_columns)) + 1) ? 1 : 0;
   end
 end
 
@@ -632,9 +646,9 @@ always @(posedge clk) begin : proc_sram_write_data_r
     dut__tb__sram_result_write_data_reg <= `SRAM_DATA_WIDTH'b0;
     dut__tb__sram_scratchpad_write_data_reg <= `SRAM_DATA_WIDTH'b0;
   end else begin
-    dut__tb__sram_result_write_data_reg <= (read_cycle_complete) ? (score_matrix_multiplication_enable ? transposed_accumulator_output: accumulator_ouput) : `SRAM_DATA_WIDTH'b0;
-    dut__tb__sram_scratchpad_write_data_reg <= (read_cycle_complete) ? (score_matrix_multiplication_enable ? transposed_accumulator_output: accumulator_ouput) : `SRAM_DATA_WIDTH'b0;
-  end
+    dut__tb__sram_result_write_data_reg <= (read_cycle_complete) ? ((score_matrix_multiplication_enable | attention_matrix_multiplication_enable) ? transposed_accumulator_output: accumulator_ouput) : `SRAM_DATA_WIDTH'b0;
+    dut__tb__sram_scratchpad_write_data_reg <= (read_cycle_complete) ? ((score_matrix_multiplication_enable | attention_matrix_multiplication_enable)  ? transposed_accumulator_output: accumulator_ouput) : `SRAM_DATA_WIDTH'b0;
+   end
 end
 
 assign dut__tb__sram_result_write_data = dut__tb__sram_result_write_data_reg;
@@ -651,7 +665,7 @@ always @(posedge clk) begin : proc_accumulation
     transposedAddendReg <= 0;
   end else begin
     if (compute_accumulation) begin
-      if(score_matrix_multiplication_enable) begin
+      if(score_matrix_multiplication_enable | attention_matrix_multiplication_enable) begin
        transposedAddendReg <= transposed_accumulator_output; 
       end
       else accumulator_addend <= accumulator_ouput;
